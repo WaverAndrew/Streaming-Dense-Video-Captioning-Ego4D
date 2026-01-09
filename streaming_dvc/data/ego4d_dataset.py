@@ -173,10 +173,35 @@ class Ego4DDenseCapDataset(Dataset):
             return_tensors="pt"
         )
         
+        # Prepare context tokens (previous caption)
+        # Shift captions by 1: context for segment k is caption of segment k-1
+        context_tokens_list = []
+        for i in range(num_outputs):
+            if i == 0:
+                context_text = "" # No context for first segment
+            else:
+                context_text = captions_per_output[i-1]
+                
+            # Randomly mask context during training
+            if self.split == "train" and random.random() < self.training_config.context_mask_ratio:
+                context_text = ""
+                
+            context_tokens_list.append(context_text)
+            
+        # Tokenize context
+        encoded_context = self.tokenizer(
+            context_tokens_list,
+            padding="max_length",
+            truncation=True,
+            max_length=128,
+            return_tensors="pt"
+        )
+
         return {
             "video": video,
             "input_ids": encoded.input_ids,
             "attention_mask": encoded.attention_mask,
+            "context_tokens": encoded_context.input_ids, # Pass context tokens
             "clip_id": clip_id
         }
 

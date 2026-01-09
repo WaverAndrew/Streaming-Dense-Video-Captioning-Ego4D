@@ -55,8 +55,8 @@ class DecoderConfig:
     # Decoder type: 'transformer' (scratch) or 't5' (pretrained)
     decoder_type: str = "t5"
     
-    # T5/Vid2Seq settings
-    model_name: str = "google/t5-v1_1-base"  # Base for Vid2Seq
+    # T5/Vid2Seq settings - use t5-base to match VidChapters weights
+    model_name: str = "t5-base"
     pretrained: bool = True
     
     # Common settings

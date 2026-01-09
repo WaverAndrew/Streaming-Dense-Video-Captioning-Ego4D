@@ -68,6 +68,7 @@ class StreamingDenseVideoCaptioning(nn.Module):
         video: torch.Tensor,
         text_tokens: Optional[torch.Tensor] = None,
         checkpoint_indices: Optional[torch.Tensor] = None,
+        context_tokens: Optional[torch.Tensor] = None,
     ) -> Dict[str, Any]:
         """
         Forward pass for training.
@@ -76,6 +77,7 @@ class StreamingDenseVideoCaptioning(nn.Module):
             video: (B, T, C, H, W) video frames
             text_tokens: (B, num_dense_outputs, L) ground truth captions
             checkpoint_indices: (B, num_dense_outputs) indices of frames to predict at
+            context_tokens: (B, num_dense_outputs, C) previous captions as context
             
         Returns:
             dict with 'loss' and 'logits'
@@ -124,10 +126,16 @@ class StreamingDenseVideoCaptioning(nn.Module):
             # Flatten text tokens: (B * num_dense_outputs, L)
             flat_text = text_tokens.reshape(-1, text_tokens.shape[-1])
             
+            # Flatten context tokens if provided
+            flat_context = None
+            if context_tokens is not None:
+                flat_context = context_tokens.reshape(-1, context_tokens.shape[-1])
+            
             outputs = self.text_decoder(
                 input_ids=flat_text,
                 encoder_hidden_states=flat_memory,
-                labels=flat_text
+                labels=flat_text,
+                context_input_ids=flat_context
             )
             
             # Reshape output for clarity
